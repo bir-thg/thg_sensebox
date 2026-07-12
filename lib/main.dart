@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'; // <-- 1. NEUER IMPORT
+
 import 'api_service.dart'; // Unsere API-Datei aus Schritt 3
+import 'sensor_history_card.dart'; // <-- NEU: Unsere Graphen-Karte
 
 void main() {
   runApp(const ThgSenseBoxApp());
@@ -17,6 +20,17 @@ class ThgSenseBoxApp extends StatelessWidget {
     return MaterialApp(
       title: 'THG Umweltdaten',
       debugShowCheckedModeBanner: false, // Entfernt das "Debug"-Banner oben rechts
+
+// --- 2. HIER KOMMT DIE SPRACH-KONFIGURATION REIN ---
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('de', 'DE'), // Deutsch als unterstützte Sprache festlegen
+      ],
+      // ----------------------------------------------------
       theme: ThemeData(
         primaryColor: primaryColor,
         colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
@@ -100,7 +114,16 @@ class _SenseBoxScreenState extends State<SenseBoxScreen> {
               itemCount: sensors.length,
               itemBuilder: (context, index) {
                 final sensor = sensors[index];
-                return _buildSensorCard(sensor);
+                
+                // Wir rufen nun unsere neue, interaktive Karte auf
+                return SensorHistoryCard(
+                  boxId: SenseBoxApi.boxId, // Wir nehmen die ID direkt aus Deiner API-Klasse
+                  sensorId: sensor.id,      // Hier kommt unsere neue ID zum Einsatz!
+                  title: sensor.title,
+                  currentValue: sensor.value,
+                  unit: sensor.unit,
+                  icon: _getIconForSensor(sensor.title), // Deine Icon-Logik bleibt erhalten
+                );
               },
             );
           },
@@ -123,7 +146,8 @@ class _SenseBoxScreenState extends State<SenseBoxScreen> {
     return Icons.sensors; // Standard-Icon, falls ein Name nicht erkannt wird
   }
 
-  // Unser Widget für eine einzelne, moderne Sensordaten-Karte
+  // Unser Widget für eine einzelne, moderne Sensordaten-Karte (old)
+  /*
   Widget _buildSensorCard(SensorData sensor) {
     final iconData = _getIconForSensor(sensor.title);
 
@@ -180,4 +204,5 @@ class _SenseBoxScreenState extends State<SenseBoxScreen> {
       ),
     );
   }
+  */
 }
