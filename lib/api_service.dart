@@ -3,11 +3,13 @@ import 'package:http/http.dart' as http;
 
 // 1. Unser Datenmodell: So sieht ein einzelner Sensor-Wert für uns aus
 class SensorData {
+  final String id; // <-- NEU: Die eindeutige ID des Sensors
   final String title;
   final String value;
   final String unit;
 
   SensorData({
+    required this.id, // <-- NEU
     required this.title,
     required this.value,
     required this.unit,
@@ -20,6 +22,7 @@ class SensorData {
     final value = measurement != null ? measurement['value'] : '--';
 
     return SensorData(
+      id: json['_id'].toString(), // <-- NEU: Wir lesen die kryptische ID mit aus
       title: json['title'] ?? 'Unbekannt',
       value: value.toString(),
       unit: json['unit'] ?? '',
