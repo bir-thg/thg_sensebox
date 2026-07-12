@@ -57,152 +57,111 @@ class SenseBoxScreen extends StatefulWidget {
 }
 
 class _SenseBoxScreenState extends State<SenseBoxScreen> {
-  // Dieses Future hält unsere Sensordaten
   late Future<List<SensorData>> futureSensorData;
+
+  // 1. Unsere Boxen (Hier trägst Du den Namen und die IDs ein)
+  final Map<String, String> myBoxes = {
+    'THG Box 1': '69bd6ceb867a8a00078d3c3f',
+    'THG Box 2': 'DEINE_ZWEITE_BOX_ID_HIER', // <-- Hier die neue ID einfügen!
+  };
+
+  // 2. Die aktuell ausgewählte Box
+  late String selectedBoxId;
 
   @override
   void initState() {
     super.initState();
-    // Beim Start der App die Daten abrufen
-    futureSensorData = SenseBoxApi.fetchSensorData();
+    // Beim ersten Start nehmen wir einfach die erste Box aus der Liste
+    selectedBoxId = myBoxes.values.first;
+    _loadData();
   }
 
-  // Methode für "Pull-to-Refresh" (Wischen nach unten zum Aktualisieren)
-  Future<void> _refreshData() async {
+  // 3. Eine kleine Hilfsmethode, um das Laden manuell anzustoßen
+  void _loadData() {
     setState(() {
-      futureSensorData = SenseBoxApi.fetchSensorData();
+      futureSensorData = SenseBoxApi.fetchSensorData(selectedBoxId);
     });
+  }
+
+  // Diese Methode baut das richtige Icon für die Karte (Bleibt unverändert!)
+  IconData _getIconForSensor(String title) {
+    final lowerTitle = title.toLowerCase();
+    if (lowerTitle.contains('temperatur')) return Icons.thermostat;
+    if (lowerTitle.contains('luftfeuchtigkeit') || lowerTitle.contains('rel. luftfeuchte')) return Icons.water_drop;
+    if (lowerTitle.contains('luftdruck')) return Icons.speed;
+    if (lowerTitle.contains('beleuchtungsstärke') || lowerTitle.contains('helligkeit')) return Icons.light_mode;
+    if (lowerTitle.contains('uv')) return Icons.wb_sunny;
+    if (lowerTitle.contains('feinstaub') || lowerTitle.contains('pm10') || lowerTitle.contains('pm2.5')) return Icons.cloud;
+    return Icons.sensors;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('THG SenseBox Live'),
+        title: const Text('THG Umweltdaten'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshData,
-          )
+          // 4. Das Dropdown-Menü oben rechts in der Leiste
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: DropdownButton<String>(
+              value: selectedBoxId,
+              dropdownColor: Theme.of(context).primaryColor, // Dropdown im passenden Blau
+              icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+              underline: const SizedBox(), // Versteckt die Standard-Linie unter dem Dropdown
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              onChanged: (String? newValue) {
+                if (newValue != null && newValue != selectedBoxId) {
+                  // Wenn eine neue Box gewählt wurde: ID aktualisieren und Daten neu laden
+                  selectedBoxId = newValue;
+                  _loadData();
+                }
+              },
+              // Baut aus unserer Liste (myBoxes) die auswählbaren Elemente
+              items: myBoxes.entries.map<DropdownMenuItem<String>>((entry) {
+                return DropdownMenuItem<String>(
+                  value: entry.value,
+                  child: Text(entry.key),
+                );
+              }).toList(),
+            ),
+          ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: _refreshData,
-        // Der FutureBuilder kümmert sich um das Warten auf die API
-        child: FutureBuilder<List<SensorData>>(
-          future: futureSensorData,
-          builder: (context, snapshot) {
-            // Lade-Animation anzeigen, solange Daten geholt werden
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } 
-            // Fehlermeldung, falls was schiefgeht
-            else if (snapshot.hasError) {
-              return Center(child: Text('Fehler: ${snapshot.error}'));
-            } 
-            // Meldung, falls keine Daten kommen
-            else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('Keine Sensordaten gefunden.'));
-            }
-
+      body: FutureBuilder<List<SensorData>>(
+        future: futureSensorData,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Fehler beim Laden: ${snapshot.error}',
+                style: const TextStyle(color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            );
+          } else if (snapshot.hasData) {
             final sensors = snapshot.data!;
-
-            // Die Liste der Sensoren bauen
             return ListView.builder(
               padding: const EdgeInsets.all(16.0),
               itemCount: sensors.length,
               itemBuilder: (context, index) {
                 final sensor = sensors[index];
-                
-                // Wir rufen nun unsere neue, interaktive Karte auf
                 return SensorHistoryCard(
-                  boxId: SenseBoxApi.boxId, // Wir nehmen die ID direkt aus Deiner API-Klasse
-                  sensorId: sensor.id,      // Hier kommt unsere neue ID zum Einsatz!
+                  boxId: selectedBoxId, // <-- 5. WICHTIG: Hier reichen wir die Variable durch!
+                  sensorId: sensor.id,
                   title: sensor.title,
                   currentValue: sensor.value,
                   unit: sensor.unit,
-                  icon: _getIconForSensor(sensor.title), // Deine Icon-Logik bleibt erhalten
+                  icon: _getIconForSensor(sensor.title),
                 );
               },
             );
-          },
-        ),
+          }
+          return const Center(child: Text('Keine Daten verfügbar.'));
+        },
       ),
     );
   }
-
-// Diese Methode sucht anhand des Namens das passende Icon heraus
-  IconData _getIconForSensor(String title) {
-    final lowerTitle = title.toLowerCase();
-    
-    if (lowerTitle.contains('temperatur')) return Icons.thermostat;
-    if (lowerTitle.contains('luftfeuchte')) return Icons.water_drop;
-    if (lowerTitle.contains('luftdruck')) return Icons.speed; // oder Icons.compress
-    if (lowerTitle.contains('beleuchtung')) return Icons.light_mode;
-    if (lowerTitle.contains('uv')) return Icons.brightness_high;
-    if (lowerTitle.contains('pm')) return Icons.air; // Für alle Feinstaub-Werte (PM1, PM2.5, PM10)
-    
-    return Icons.sensors; // Standard-Icon, falls ein Name nicht erkannt wird
-  }
-
-  // Unser Widget für eine einzelne, moderne Sensordaten-Karte (old)
-  /*
-  Widget _buildSensorCard(SensorData sensor) {
-    final iconData = _getIconForSensor(sensor.title);
-
-    return Card(
-      elevation: 0, 
-      // 1. ÄNDERUNG: Abstand nach unten von 12 auf 6 reduziert
-      margin: const EdgeInsets.only(bottom: 6.0),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10), // Minimal kleinerer Radius
-        side: BorderSide(color: Colors.grey.shade300, width: 1),
-      ),
-      child: Padding(
-        // 2. ÄNDERUNG: Innerer Abstand oben/unten von 16 auf 8 reduziert
-        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-        child: Row(
-          children: [
-            Container(
-              // 3. ÄNDERUNG: Icon-Hintergrundbox etwas schmaler (8 statt 10)
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                // 4. ÄNDERUNG: Die Warnung ist weg! withAlpha(20) entspricht 8% Deckkraft
-                color: const Color(0xFF00427A).withAlpha(20), 
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                iconData,
-                color: const Color(0xFF00427A), 
-                size: 22, // Icon-Größe von 26 auf 22 reduziert
-              ),
-            ),
-            const SizedBox(width: 12), // Abstand zum Text etwas verkleinert
-            
-            Expanded(
-              child: Text(
-                sensor.title,
-                style: const TextStyle(
-                  fontSize: 14, // Schriftgröße Titel von 16 auf 14 reduziert
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF00427A), 
-                ),
-              ),
-            ),
-            
-            Text(
-              '${sensor.value} ${sensor.unit}',
-              style: const TextStyle(
-                fontSize: 15, // Schriftgröße Wert von 18 auf 15 reduziert
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  */
 }

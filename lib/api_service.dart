@@ -32,23 +32,20 @@ class SensorData {
 
 // 2. Unser API-Dienst: Holt die Daten ab
 class SenseBoxApi {
-  // Deine spezifische SenseBox-ID vom THG
-  static const String boxId = '69bd6ceb867a8a00078d3c3f';
-  static const String apiUrl = 'https://api.opensensemap.org/boxes/$boxId';
-
-  static Future<List<SensorData>> fetchSensorData() async {
+  // Die fetch-Methode verlangt nun zwingend eine Box-ID als Parameter
+  static Future<List<SensorData>> fetchSensorData(String boxId) async {
+    final String apiUrl = 'https://api.opensensemap.org/boxes/$boxId';
+    
     try {
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
-        // JSON decodieren
         final jsonData = json.decode(response.body);
         final List<dynamic> sensorsJson = jsonData['sensors'];
 
-        // Aus der JSON-Liste eine Liste von SensorData-Objekten machen
         return sensorsJson.map((json) => SensorData.fromJson(json)).toList();
       } else {
-        throw Exception('Fehler beim Laden der Daten (Status: ${response.statusCode})');
+        throw Exception('Fehler beim Laden der Sensordaten');
       }
     } catch (e) {
       throw Exception('Netzwerkfehler: $e');
