@@ -92,38 +92,12 @@ class _SensorHistoryCardState extends State<SensorHistoryCard> {
   }
 
   // 4. Den Kalender öffnen
-  /*
   Future<void> _selectCustomDateRange() async {
-    final DateTimeRange? picked = await showDateRangePicker(
-      context: context,
-      initialEntryMode: DatePickerEntryMode.calendar, // <-- NEU: Zwingt ihn in die Kalender-Ansicht
-      firstDate: DateTime(2025), // Irgendein Startjahr in der Vergangenheit
-      lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(primary: Colors.blue), // Passe die Farbe an Dein Design an
-          ),
-          child: child!,
-        );
-      },
-    );
-
-    if (picked != null) {
-      setState(() {
-        _customDateRange = picked;
-        _selectedPeriod = 'Custom';
-      });
-      _fetchData(); // Neue Daten für den Zeitraum holen
-    }
-  }
-  */
-Future<void> _selectCustomDateRange() async {
     // 1. Startdatum auswählen
     final DateTime? start = await showDatePicker(
       context: context,
       initialDate: DateTime.now().subtract(const Duration(days: 7)), // Schlägt standardmäßig eine Woche vor
-      firstDate: DateTime(2015),
+      firstDate: DateTime(2025),
       lastDate: DateTime.now(),
       initialEntryMode: DatePickerEntryMode.calendar,
       helpText: 'VON (STARTDATUM)',

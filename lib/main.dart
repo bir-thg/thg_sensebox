@@ -62,7 +62,7 @@ class _SenseBoxScreenState extends State<SenseBoxScreen> {
   // 1. Unsere Boxen (Hier trägst Du den Namen und die IDs ein)
   final Map<String, String> myBoxes = {
     'THG Box 1': '69bd6ceb867a8a00078d3c3f',
-    'THG Box 2': 'DEINE_ZWEITE_BOX_ID_HIER', // <-- Hier die neue ID einfügen!
+    'THG Box 2': '69bd6c10867a8a00078bedbb', // <-- Hier die neue ID einfügen!
   };
 
   // 2. Die aktuell ausgewählte Box
