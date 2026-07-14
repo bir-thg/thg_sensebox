@@ -91,7 +91,7 @@ class _SenseBoxScreenState extends State<SenseBoxScreen> {
     if (lowerTitle.contains('luftdruck')) return Icons.speed;
     if (lowerTitle.contains('beleuchtungsstärke') || lowerTitle.contains('helligkeit')) return Icons.light_mode;
     if (lowerTitle.contains('uv')) return Icons.wb_sunny;
-    if (lowerTitle.contains('feinstaub') || lowerTitle.contains('pm10') || lowerTitle.contains('pm2.5')) return Icons.cloud;
+    if (lowerTitle.contains('feinstaub') || lowerTitle.contains('pm10') || lowerTitle.contains('pm25') || lowerTitle.contains('pm1')  || lowerTitle.contains('pm4')) return Icons.blur_on;
     return Icons.sensors;
   }
 
